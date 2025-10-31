@@ -720,6 +720,7 @@ let PLANET_BY_NAME = {};
 PLANETS.forEach(p => PLANET_BY_NAME[p.name] = p);
 let selected_planets = ['Venus', 'Earth', 'Mars', 'Jupiter'];
 let current_date = new Date();
+current_date.setHours(0,0,0,0);
 let active_tab = 'single';
 
 let DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -731,6 +732,14 @@ function els(sel) { return document.querySelectorAll(sel); }
 function dateKey(d)
 {
     return d.toISOString().split('T')[0];
+}
+
+function formatDateInput(d)
+{
+    let year = String(d.getFullYear()).padStart(4, '0');
+    let month = String(d.getMonth() + 1).padStart(2, '0');
+    let day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function splitNameDate(line)
@@ -938,13 +947,22 @@ function renderFriendsList()
 
 function changeMonth(delta)
 {
-    current_date.setMonth(current_date.getMonth() + delta);
+    let target_day = current_date.getDate();
+    current_date.setMonth(current_date.getMonth() + delta, 1);
+    let max_day = new Date(current_date.getFullYear(), current_date.getMonth() + 1, 0).getDate();
+    current_date.setDate(Math.min(target_day, max_day));
+    current_date.setHours(0,0,0,0);
     renderCalendar();
 }
 
 function changeYear(delta)
 {
-    current_date.setFullYear(current_date.getFullYear() + delta);
+    let target_day = current_date.getDate();
+    let target_month = current_date.getMonth();
+    current_date.setFullYear(current_date.getFullYear() + delta, target_month, 1);
+    let max_day = new Date(current_date.getFullYear(), target_month + 1, 0).getDate();
+    current_date.setDate(Math.min(target_day, max_day));
+    current_date.setHours(0,0,0,0);
     renderCalendar();
 }
 
@@ -952,16 +970,10 @@ function jumpToDate()
 {
     let v = el('jumpDate').value;
     if (!v) { return; }
-    let d = new Date(v + 'T00:00:00');
-    if (!isNaN(d))
-    {
-        current_date = new Date(d.getFullYear(), d.getMonth(), 1);
-        renderCalendar();
-    }
-    else
-    {
-        alert('Invalid date');
-    }
+    if (!isValidDateYMD(v)) { alert('Invalid date'); return; }
+    let parsed = parseYMD(v);
+    current_date = makeDate(parsed[0], parsed[1], parsed[2]);
+    renderCalendar();
 }
 
 function jumpToFriend(birthday)
@@ -972,10 +984,7 @@ function jumpToFriend(birthday)
     let year = parsed[0];
     let month_index = parsed[1];
     let day = parsed[2];
-    current_date = new Date(year, month_index, 1);
-    current_date.setFullYear(year);
-    current_date.setHours(0,0,0,0);
-    el('jumpDate').value = `${String(year).padStart(4,'0')}-${String(month_index + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    current_date = makeDate(year, month_index, day);
     renderCalendar();
 }
 
@@ -1088,6 +1097,11 @@ function renderCalendar()
     }
 
     el('calendar').innerHTML = html;
+    let jump_input = el('jumpDate');
+    if (jump_input)
+    {
+        jump_input.value = formatDateInput(current_date);
+    }
 }
 
 function calculateBirthdaysForPeriod(start_date, end_date)
