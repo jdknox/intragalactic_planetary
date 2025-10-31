@@ -413,6 +413,25 @@
             align-items: center;
         }
 
+        .friend-link {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: left;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .friend-link:focus-visible {
+            outline: 2px solid rgba(102, 126, 234, 0.6);
+            outline-offset: 2px;
+        }
+
         .friend-name {
             font-weight: 600;
             font-size: 14px;
@@ -637,7 +656,7 @@
 <script>
 let DAY_MS = 86400000;
 
-let planetData = [
+let planet_data = [
     ['Mercury', '☿️', 87.969, '#8B7355'],
     ['Venus', '♀️', 224.701, '#98B95C'],
     ['Earth', '🌍', 365.25636, '#4169E1'],
@@ -650,24 +669,41 @@ let planetData = [
 ];
 
 let PLANETS = [];
-for (let i = 0; i < planetData.length; ++i)
+for (let i = 0; i < planet_data.length; ++i)
 {
-    let data = planetData[i];
+    let data = planet_data[i];
     PLANETS.push({
         name: data[0],
         icon: data[1],
         period: data[2],
-        periodMs: data[2]*DAY_MS,
+        period_ms: data[2]*DAY_MS,
         color: data[3]
     });
 }
 
-let friends = [];
+let default_friends = [
+    { name: 'Pesto (Emperor Penguin)', birthday: '2024-01-30' },
+    { name: 'Nero (Emperor of Rome)', birthday: '0037-12-15' },
+    { name: 'Charlemagne (King of the Franks)', birthday: '0742-04-02' },
+    { name: 'Napoleon', birthday: '1769-08-15' },
+    { name: 'EGW', birthday: '1827-11-26' },
+];
+
+let default_friend_base_id = Date.now();
+
+let friends = default_friends.map((friend, index) =>
+{
+    return {
+        id: default_friend_base_id + index,
+        name: friend.name,
+        birthday: friend.birthday
+    };
+});
 let PLANET_BY_NAME = {};
 PLANETS.forEach(p => PLANET_BY_NAME[p.name] = p);
-let selectedPlanets = ['Earth', 'Mars', 'Jupiter'];
-let currentDate = new Date();
-let activeTab = 'single';
+let selected_planets = ['Earth', 'Mars', 'Jupiter'];
+let current_date = new Date();
+let active_tab = 'single';
 
 let DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 let DAYS_HEADERS_HTML = DAYS_SHORT.map(d => `<div class="day-header">${d}</div>`).join('');
@@ -735,7 +771,7 @@ function rerenderAll()
 
 function switchTab(tab)
 {
-    activeTab = tab;
+    active_tab = tab;
     let tabs = els('.tab');
     let contents = els('.tab-content');
     tabs.forEach(t => t.classList.remove('active'));
@@ -762,7 +798,7 @@ function initPlanetFilters()
     let container = el('planetFilters');
     let items = PLANETS.map(planet => `
         <label class="planet-checkbox">
-            <input type="checkbox" value="${planet.name}" ${selectedPlanets.includes(planet.name) ? 'checked' : ''} onchange="togglePlanet('${planet.name}')">
+            <input type="checkbox" value="${planet.name}" ${selected_planets.includes(planet.name) ? 'checked' : ''} onchange="togglePlanet('${planet.name}')">
             <span class="planet-icon">${planet.icon}</span>
             <span style="font-size:14px;font-weight:600;">${planet.name}</span>
         </label>
@@ -770,15 +806,15 @@ function initPlanetFilters()
     renderList(container, items);
 }
 
-function togglePlanet(planetName)
+function togglePlanet(planet_name)
 {
-    if (selectedPlanets.includes(planetName))
+    if (selected_planets.includes(planet_name))
     {
-        selectedPlanets = selectedPlanets.filter(p => p !== planetName);
+        selected_planets = selected_planets.filter(p => p !== planet_name);
     }
     else
     {
-        selectedPlanets.push(planetName);
+        selected_planets.push(planet_name);
     }
     rerenderAll();
 }
@@ -812,8 +848,8 @@ function importBulk()
     }
 
     let lines = text.split('\n');
-    let successCount = 0;
-    let failCount = 0;
+    let success_count = 0;
+    let fail_count = 0;
     let errors = [];
 
     lines.forEach((line, index) => {
@@ -823,7 +859,7 @@ function importBulk()
         let parsed = splitNameDate(line);
         if (!parsed)
         {
-            failCount++;
+            fail_count++;
             errors.push(`Line ${index+1}: Could not parse "${line}"`);
             return;
         }
@@ -838,11 +874,11 @@ function importBulk()
                 name: name,
                 birthday: date
             });
-            successCount++;
+            success_count++;
         }
         else
         {
-            failCount++;
+            fail_count++;
             errors.push(`Line ${index+1}: Invalid date "${date}"`);
         }
     });
@@ -872,10 +908,10 @@ function renderFriendsList()
         let formatted = d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
         return `
             <div class="friend-item">
-                <div>
-                    <div class="friend-name">${friend.name}</div>
-                    <div class="friend-date">${formatted}</div>
-                </div>
+                <button type="button" class="friend-link" onclick="jumpToFriend('${friend.birthday}')">
+                    <span class="friend-name">${friend.name}</span>
+                    <span class="friend-date">${formatted}</span>
+                </button>
                 <button class="delete-btn" onclick="removeFriend(${friend.id})">🗑️</button>
             </div>
         `;
@@ -885,13 +921,13 @@ function renderFriendsList()
 
 function changeMonth(delta)
 {
-    currentDate.setMonth(currentDate.getMonth() + delta);
+    current_date.setMonth(current_date.getMonth() + delta);
     renderCalendar();
 }
 
 function changeYear(delta)
 {
-    currentDate.setFullYear(currentDate.getFullYear() + delta);
+    current_date.setFullYear(current_date.getFullYear() + delta);
     renderCalendar();
 }
 
@@ -902,7 +938,7 @@ function jumpToDate()
     let d = new Date(v + 'T00:00:00');
     if (!isNaN(d))
     {
-        currentDate = new Date(d.getFullYear(), d.getMonth(), 1);
+        current_date = new Date(d.getFullYear(), d.getMonth(), 1);
         renderCalendar();
     }
     else
@@ -911,12 +947,27 @@ function jumpToDate()
     }
 }
 
+function jumpToFriend(birthday)
+{
+    if (!birthday) { return; }
+    let parsed = parseYMD(birthday);
+    if (!parsed || parsed.length < 3) { return; }
+    let year = parsed[0];
+    let month_index = parsed[1];
+    let day = parsed[2];
+    current_date = new Date(year, month_index, 1);
+    current_date.setFullYear(year);
+    current_date.setHours(0,0,0,0);
+    el('jumpDate').value = `${String(year).padStart(4,'0')}-${String(month_index + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    renderCalendar();
+}
+
 function calculateBirthdaysForMonth()
 {
-    let year = currentDate.getFullYear();
-    let month = currentDate.getMonth();
-    let startOfMonth = makeDate(year, month, 1);
-    let endOfMonth = new Date(year, month+1, 0, 23, 59, 59, 999);
+    let year = current_date.getFullYear();
+    let month = current_date.getMonth();
+    let start_of_month = makeDate(year, month, 1);
+    let end_of_month = new Date(year, month+1, 0, 23, 59, 59, 999);
     let birthdays = [];
 
     friends.forEach(friend => {
@@ -924,19 +975,19 @@ function calculateBirthdaysForMonth()
         let by = p[0];
         let bm = p[1];
         let bd = p[2];
-        let birthDate = makeDate(by, bm, bd);
+        let birth_date = makeDate(by, bm, bd);
 
-        selectedPlanets.forEach(planetName => {
-            let planet = PLANET_BY_NAME[planetName];
+        selected_planets.forEach(planet_name => {
+            let planet = PLANET_BY_NAME[planet_name];
             if (!planet) { return; }
 
             if (planet.name === 'Earth')
             {
-                let earthBirthday = makeDate(year, bm, bd);
-                if (earthBirthday >= startOfMonth && earthBirthday <= endOfMonth)
+                let earth_birthday = makeDate(year, bm, bd);
+                if (earth_birthday >= start_of_month && earth_birthday <= end_of_month)
                 {
                     birthdays.push({
-                        date: earthBirthday,
+                        date: earth_birthday,
                         friend: friend.name,
                         planet: planet,
                         age: year - by
@@ -948,14 +999,14 @@ function calculateBirthdaysForMonth()
                 if (year === by && month === bm)
                 {
                     birthdays.push({
-                        date: birthDate,
+                        date: birth_date,
                         friend: friend.name,
                         planet: planet,
                         age: 0
                     });
                     return;
                 }
-                let hits = collectPlanetHits(birthDate, planet, startOfMonth, endOfMonth, 1);
+                let hits = collectPlanetHits(birth_date, planet, start_of_month, end_of_month, 1);
                 hits.forEach(hit => {
                     birthdays.push({
                         date: hit.date,
@@ -973,48 +1024,48 @@ function calculateBirthdaysForMonth()
 
 function renderCalendar()
 {
-    let year = currentDate.getFullYear();
-    let month = currentDate.getMonth();
-    let firstDay = new Date(year, month, 1);
-    let lastDay = new Date(year, month + 1, 0);
-    let daysInMonth = lastDay.getDate();
-    let startingDayOfWeek = firstDay.getDay();
+    let year = current_date.getFullYear();
+    let month = current_date.getMonth();
+    let first_day = new Date(year, month, 1);
+    let last_day = new Date(year, month + 1, 0);
+    let days_in_month = last_day.getDate();
+    let starting_day_of_week = first_day.getDay();
 
-    let monthName = currentDate.toLocaleDateString('en-US', {
+    let month_name = current_date.toLocaleDateString('en-US', {
         month: 'long',
         year: 'numeric'
     });
-    el('monthTitle').textContent = monthName;
+    el('monthTitle').textContent = month_name;
 
     let birthdays = calculateBirthdaysForMonth();
     let today = new Date();
     today.setHours(0,0,0,0);
-    let todayKey = dateKey(today);
+    let today_key = dateKey(today);
     
     let html = DAYS_HEADERS_HTML;
 
-    for (let i = 0; i < startingDayOfWeek; i++)
+    for (let i = 0; i < starting_day_of_week; i++)
     {
         html += `<div></div>`;
     }
 
-    for (let day = 1; day <= daysInMonth; day++)
+    for (let day = 1; day <= days_in_month; day++)
     {
-        let cellDate = makeDate(year, month, day);
-        let isToday = dateKey(cellDate) === todayKey;
+        let cell_date = makeDate(year, month, day);
+        let is_today = dateKey(cell_date) === today_key;
         
-        let dayBirthdays = filterByYMD(birthdays, year, month, day);
+        let day_birthdays = filterByYMD(birthdays, year, month, day);
 
-        let birthdayBadges = dayBirthdays.map(b => `
+        let birthday_badges = day_birthdays.map(b => `
             <div class="birthday-badge" style="background:${b.planet.color}">
                 ${b.planet.icon} ${b.friend} (${b.age})
             </div>
         `).join('');
 
         html += `
-            <div class="calendar-day ${isToday ? 'today' : ''}">
+            <div class="calendar-day ${is_today ? 'today' : ''}">
                 <div class="day-number">${day}</div>
-                ${birthdayBadges}
+                ${birthday_badges}
             </div>
         `;
     }
@@ -1022,30 +1073,30 @@ function renderCalendar()
     el('calendar').innerHTML = html;
 }
 
-function calculateBirthdaysForPeriod(startDate, endDate)
+function calculateBirthdaysForPeriod(start_date, end_date)
 {
     let birthdays = [];
 
     friends.forEach(friend => {
         let p = parseYMD(friend.birthday);
-        let birthYear = p[0];
-        let birthMonth = p[1];
-        let birthDay = p[2];
-        let birthday = makeDate(birthYear, birthMonth, birthDay);
+        let birth_year = p[0];
+        let birth_month = p[1];
+        let birth_day = p[2];
+        let birthday = makeDate(birth_year, birth_month, birth_day);
 
-        selectedPlanets.forEach(planetName => {
-            let planet = PLANET_BY_NAME[planetName];
+        selected_planets.forEach(planet_name => {
+            let planet = PLANET_BY_NAME[planet_name];
             if (!planet) { return; }
 
             if (planet.name === 'Earth')
             {
-                for (let year = startDate.getFullYear(); year <= endDate.getFullYear() + 1; year++)
+                for (let year = start_date.getFullYear(); year <= end_date.getFullYear() + 1; year++)
                 {
-                    let earthBirthday = makeDate(year, birthMonth, birthDay);
-                    if (earthBirthday >= startDate && earthBirthday <= endDate)
+                    let earth_birthday = makeDate(year, birth_month, birth_day);
+                    if (earth_birthday >= start_date && earth_birthday <= end_date)
                     {
                         birthdays.push({
-                            date: earthBirthday,
+                            date: earth_birthday,
                             friend: friend.name,
                             planet: planet
                         });
@@ -1054,7 +1105,7 @@ function calculateBirthdaysForPeriod(startDate, endDate)
             }
             else
             {
-                let hits = collectPlanetHits(birthday, planet, startDate, endDate, 0);
+                let hits = collectPlanetHits(birthday, planet, start_date, end_date, 0);
                 hits.forEach(hit => {
                     birthdays.push({
                         date: hit.date,
@@ -1077,97 +1128,97 @@ function renderHistograms()
     renderOverview('year');
 }
 
-function histogramBarTemplate(bucket, innerHtml, planet_list)
+function histogramBarTemplate(bucket, inner_html, planet_list)
 {
     let s = bucket.count > 1 ? 's' : '';
     return `
         <div class="histogram-bar" title="${bucket.count} birthday${s} in ${bucket.label} (${planet_list})">
             ${bucket.count > 0 ? `<div class="histogram-bar-count">${bucket.count}</div>` : ''}
-            ${innerHtml}
+            ${inner_html}
             <div class="histogram-bar-label">${bucket.label}</div>
         </div>
     `;
 }
 
-function buildHistogramBar(bucket, maxCount, isYear)
+function buildHistogramBar(bucket, max_count, is_year)
 {
-    let totalHeight = (bucket.count/maxCount)*100;
-    let planet_list = formatPlanetGroups(bucket.planetGroups);
+    let total_height = (bucket.count/max_count)*100;
+    let planet_list = formatPlanetGroups(bucket.planet_groups);
 
-    if (isYear)
+    if (is_year)
     {
-        let rectHeight = bucket.count > 0 ? totalHeight / bucket.count : 0;
+        let rect_height = bucket.count > 0 ? total_height / bucket.count : 0;
         let rects = [];
         let pre = `<div class="histogram-rect" style="background:`;
         let post = `%;"></div>`
 
-        selectedPlanets.forEach(name => {
+        selected_planets.forEach(name => {
             let planet = PLANET_BY_NAME[name];
             if (!planet) return;
-            let count = bucket.planetGroups[name] ? bucket.planetGroups[name].length : 0;
+            let count = bucket.planet_groups[name] ? bucket.planet_groups[name].length : 0;
             for (let i = 0; i < count; i++)
             {
-                rects.push(`${pre}${planet.color};height:${rectHeight}${post}`);
+                rects.push(`${pre}${planet.color};height:${rect_height}${post}`);
             }
         });
         return histogramBarTemplate(bucket, rects.join(''), planet_list);
     }
     else
     {
-        let gradient = gradientFromGroups(bucket.planetGroups, bucket.count) || 'transparent';
-        let innerHtml = `${pre}${gradient};height:${totalHeight}${post}`;
-        return histogramBarTemplate(bucket, innerHtml, planet_list);
+        let gradient = gradientFromGroups(bucket.planet_groups, bucket.count) || 'transparent';
+        let inner_html = `${pre}${gradient};height:${total_height}${post}`;
+        return histogramBarTemplate(bucket, inner_html, planet_list);
     }
 }
 
-function renderLegend(containerId, planetCounts)
+function renderLegend(container_id, planet_counts)
 {
-    let items = selectedPlanets
-        .filter(name => planetCounts[name] > 0)
+    let items = selected_planets
+        .filter(name => planet_counts[name] > 0)
         .map(name => {
             let p = PLANET_BY_NAME[name];
             return `
                 <div class="legend-item">
                     <div class="legend-color" style="background:${p.color}"></div>
-                    <span>${p.icon} ${p.name}: ${planetCounts[name]}</span>
+                    <span>${p.icon} ${p.name}: ${planet_counts[name]}</span>
                 </div>
             `;
         });
-    renderList(el(containerId), items);
+    renderList(el(container_id), items);
 }
 
 function renderHistogram(type, periods)
 {
     let today = new Date();
-    let isYear = type === 'year';
+    let is_year = type === 'year';
     let buckets = [];
-    let planetCounts = emptyPlanetCount();
+    let planet_counts = emptyPlanetCount();
 
     for (let i = 0; i<periods; i++)
     {
-        let startDate, endDate, label;
-        if (isYear)
+        let start_date, end_date, label;
+        if (is_year)
         {
-            startDate = new Date(today.getFullYear(), today.getMonth()+i, 1);
-            endDate = new Date(today.getFullYear(), today.getMonth()+i+1, 0);
-            label = startDate.toLocaleDateString('en-US', { month:'short' });
+            start_date = new Date(today.getFullYear(), today.getMonth()+i, 1);
+            end_date = new Date(today.getFullYear(), today.getMonth()+i+1, 0);
+            label = start_date.toLocaleDateString('en-US', { month:'short' });
         }
         else
         {
-            startDate = new Date(today.getFullYear()+i, 0, 1);
-            endDate = new Date(today.getFullYear()+i, 11, 31);
-            label = String(startDate.getFullYear());
+            start_date = new Date(today.getFullYear()+i, 0, 1);
+            end_date = new Date(today.getFullYear()+i, 11, 31);
+            label = String(start_date.getFullYear());
         }
-        let birthdays = calculateBirthdaysForPeriod(startDate, endDate);
-        let planetGroups = groupByPlanet(birthdays);
-        buckets.push({ label:label, count:birthdays.length, planetGroups:planetGroups });
-        birthdays.forEach(b => { planetCounts[b.planet.name] += 1; });
+        let birthdays = calculateBirthdaysForPeriod(start_date, end_date);
+        let planet_groups = groupByPlanet(birthdays);
+        buckets.push({ label:label, count:birthdays.length, planet_groups:planet_groups });
+        birthdays.forEach(b => { planet_counts[b.planet.name] += 1; });
     }
 
-    let maxCount = Math.max(...buckets.map(b => b.count), 1);
-    let barsHtml = buckets.map(bucket => buildHistogramBar(bucket, maxCount, isYear));
-    renderList(el(`histogram-${type}`), barsHtml);
-    renderLegend(`legend-${type}`, planetCounts);
+    let max_count = Math.max(...buckets.map(b => b.count), 1);
+    let bars_html = buckets.map(bucket => buildHistogramBar(bucket, max_count, is_year));
+    renderList(el(`histogram-${type}`), bars_html);
+    renderLegend(`legend-${type}`, planet_counts);
 }
 
 function renderOverview(type)
@@ -1176,77 +1227,77 @@ function renderOverview(type)
     today.setHours(0, 0, 0, 0);
     let container = document.getElementById(type + '-viz');
     let html = '';
-    let maxCount = 0;
+    let max_count = 0;
     
     if (type === 'year')
     {
-        let oneYear = new Date(today);
-        oneYear.setDate(oneYear.getDate() + 365);
-        let birthdays = calculateBirthdaysForPeriod(today, oneYear);
-        let dayMap = makeDayMap(today, 365);
+        let one_year = new Date(today);
+        one_year.setDate(one_year.getDate() + 365);
+        let birthdays = calculateBirthdaysForPeriod(today, one_year);
+        let day_map = makeDayMap(today, 365);
         for (let i = 0; i < birthdays.length; i++) {
             let key = dateKey(birthdays[i].date);
-            if (dayMap[key]) { dayMap[key].push(birthdays[i]); }
+            if (day_map[key]) { day_map[key].push(birthdays[i]); }
         }
         
-        let monthBoundaries = [];
-        let monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-        let lastMonthProcessed = -1;
+        let month_boundaries = [];
+        let month_labels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+        let last_month_processed = -1;
         
         for (let i = 0; i < 365; i++)
         {
             let date = new Date(today);
             date.setDate(date.getDate() + i);
             let key = dateKey(date);
-            let dayBirthdays = dayMap[key] || [];
-            if (date.getMonth() !== lastMonthProcessed)
+            let day_birthdays = day_map[key] || [];
+            if (date.getMonth() !== last_month_processed)
             {
-                monthBoundaries.push({ position: i*2, label: monthLabels[date.getMonth()] });
-                lastMonthProcessed = date.getMonth();
+                month_boundaries.push({ position: i*2, label: month_labels[date.getMonth()] });
+                last_month_processed = date.getMonth();
             }
-            let dotsHtml = '';
-            for (let j = 0; j < dayBirthdays.length; j++) {
-                let b = dayBirthdays[j];
-                dotsHtml += '<div class="birthday-dot" style="background:' + b.planet.color + '"></div>';
+            let dots_html = '';
+            for (let j = 0; j < day_birthdays.length; j++) {
+                let b = day_birthdays[j];
+                dots_html += '<div class="birthday-dot" style="background:' + b.planet.color + '"></div>';
             }
-            html += '<div class="day-column">' + dotsHtml + '</div>';
+            html += '<div class="day-column">' + dots_html + '</div>';
         }
         
-        for (let i = 0; i < monthBoundaries.length; i++) {
-            let item = monthBoundaries[i];
+        for (let i = 0; i < month_boundaries.length; i++) {
+            let item = month_boundaries[i];
             if (item.position > 0) {
                 html += makeOverlayDiv('month-divider', item.position + 10, '');
             }
-            let nextPos = monthBoundaries[i + 1] ? monthBoundaries[i + 1].position : 730;
-            let labelPos = item.position + (nextPos - item.position)/2;
-            html += makeOverlayDiv('month-label-marker', labelPos + 10, item.label);
+            let next_pos = month_boundaries[i + 1] ? month_boundaries[i + 1].position : 730;
+            let label_pos = item.position + (next_pos - item.position)/2;
+            html += makeOverlayDiv('month-label-marker', label_pos + 10, item.label);
         }
     }
     else // century
     {
-        let startYear = today.getFullYear();
+        let start_year = today.getFullYear();
         let total_years = 240;
-        let yearData = [];
+        let year_data = [];
         
         for (let i = 0; i <= total_years + 9; i++)
         {
-            let yearStart = new Date(startYear + i, 0, 1);
-            let yearEnd = new Date(startYear + i, 11, 31, 23, 59, 59);
-            let birthdays = calculateBirthdaysForPeriod(yearStart, yearEnd);
-            let planetGroups = groupByPlanet(birthdays);
-            yearData.push({ year: startYear + i, count: birthdays.length, planetGroups: planetGroups });
-            if (birthdays.length > maxCount) maxCount = birthdays.length;
+            let year_start = new Date(start_year + i, 0, 1);
+            let year_end = new Date(start_year + i, 11, 31, 23, 59, 59);
+            let birthdays = calculateBirthdaysForPeriod(year_start, year_end);
+            let planet_groups = groupByPlanet(birthdays);
+            year_data.push({ year: start_year + i, count: birthdays.length, planet_groups: planet_groups });
+            if (birthdays.length > max_count) max_count = birthdays.length;
         }
-        maxCount = Math.max(maxCount, 1);
+        max_count = Math.max(max_count, 1);
         
-        for (let i = 0; i < yearData.length; i++) {
-            let data = yearData[i];
+        for (let i = 0; i < year_data.length; i++) {
+            let data = year_data[i];
             if (data.count === 0) {
                 html += '<div class="year-column"></div>';
                 continue;
             }
-            let gradient = gradientFromGroups(data.planetGroups, data.count) || 'rgba(102, 126, 234, 0.5)';
-            let height = (data.count/maxCount)*100;
+            let gradient = gradientFromGroups(data.planet_groups, data.count) || 'rgba(102, 126, 234, 0.5)';
+            let height = (data.count/max_count)*100;
             html += '<div class="year-column"><div class="year-segment" style="background:' + gradient + ';height:' + height + '%;"></div></div>';
         }
         
@@ -1260,17 +1311,17 @@ function renderOverview(type)
     container.innerHTML = html;
 }
 
-function collectPlanetHits(birthDate, planet, startDate, endDate, minAgeClamp)
+function collectPlanetHits(birth_date, planet, start_date, end_date, min_age_clamp)
 {
     let out = [];
-    let minAge = Math.ceil((startDate - birthDate)/planet.periodMs);
-    let maxAge = Math.floor((endDate - birthDate)/planet.periodMs);
-    if (maxAge < 0) { return out; }
-    if (minAge < minAgeClamp) { minAge = minAgeClamp; }
-    if (minAge > maxAge) { return out; }
-    for (let age = minAge; age <= maxAge; age++)
+    let min_age = Math.ceil((start_date - birth_date)/planet.period_ms);
+    let max_age = Math.floor((end_date - birth_date)/planet.period_ms);
+    if (max_age < 0) { return out; }
+    if (min_age < min_age_clamp) { min_age = min_age_clamp; }
+    if (min_age > max_age) { return out; }
+    for (let age = min_age; age <= max_age; age++)
     {
-        let d = new Date(birthDate.getTime() + age*planet.periodMs);
+        let d = new Date(birth_date.getTime() + age*planet.period_ms);
         d.setHours(0,0,0,0);
         out.push({ date:d, age:age });
     }
@@ -1300,7 +1351,7 @@ function gradientFromGroups(groups, total)
     if (!total) { return null; }
     let stops = [];
     let cur = 0;
-    selectedPlanets.forEach(name => {
+    selected_planets.forEach(name => {
         let p = PLANET_BY_NAME[name];
         if (!p) { return; }
         let arr = groups[name];
@@ -1331,12 +1382,12 @@ function filterByYMD(list, y, m, d)
     });
 }
 
-function makeDayMap(startDate, days)
+function makeDayMap(start_date, days)
 {
     let map = {};
     for (let i = 0; i<days; i++)
     {
-        let date = new Date(startDate);
+        let date = new Date(start_date);
         date.setDate(date.getDate()+i);
         let key = dateKey(date);
         map[key] = [];
@@ -1344,9 +1395,9 @@ function makeDayMap(startDate, days)
     return map;
 }
 
-function makeOverlayDiv(cls, leftPx, label)
+function makeOverlayDiv(cls, left_px, label)
 {
-    return `<div class="${cls}" style="left:${leftPx}px;">${label ? label : ''}</div>`;
+    return `<div class="${cls}" style="left:${left_px}px;">${label ? label : ''}</div>`;
 }
 
 initPlanetFilters();
