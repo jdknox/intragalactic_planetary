@@ -485,6 +485,10 @@
             gap: 12px;
         }
 
+        .calendar-date-controls input[type="date"] {
+            width: 160px;
+        }
+
         .calendar-nav-group {
             display: inline-grid;
             grid-template-columns: auto auto minmax(180px, auto) auto auto;
@@ -1157,13 +1161,13 @@ function buildHistogramBar(bucket, max_count, is_year)
 {
     let total_height = (bucket.count/max_count)*100;
     let planet_list = formatPlanetGroups(bucket.planet_groups);
+    let rect_open = `<div class="histogram-rect" style="background:`;
+    let rect_close = `%;"></div>`;
 
     if (is_year)
     {
         let rect_height = bucket.count > 0 ? total_height / bucket.count : 0;
         let rects = [];
-        let pre = `<div class="histogram-rect" style="background:`;
-        let post = `%;"></div>`
 
         selected_planets.forEach(name => {
             let planet = PLANET_BY_NAME[name];
@@ -1171,7 +1175,7 @@ function buildHistogramBar(bucket, max_count, is_year)
             let count = bucket.planet_groups[name] ? bucket.planet_groups[name].length : 0;
             for (let i = 0; i < count; i++)
             {
-                rects.push(`${pre}${planet.color};height:${rect_height}${post}`);
+                rects.push(`${rect_open}${planet.color};height:${rect_height}${rect_close}`);
             }
         });
         return histogramBarTemplate(bucket, rects.join(''), planet_list);
@@ -1179,7 +1183,7 @@ function buildHistogramBar(bucket, max_count, is_year)
     else
     {
         let gradient = gradientFromGroups(bucket.planet_groups, bucket.count) || 'transparent';
-        let inner_html = `${pre}${gradient};height:${total_height}${post}`;
+        let inner_html = `${rect_open}${gradient};height:${total_height}${rect_close}`;
         return histogramBarTemplate(bucket, inner_html, planet_list);
     }
 }
