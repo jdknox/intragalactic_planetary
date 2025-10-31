@@ -405,9 +405,9 @@
 
         .friend-item {
             background: rgba(255, 255, 255, 0.1);
-            padding: 12px;
+            padding: 4px 10px;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 2px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -455,11 +455,11 @@
         .planet-checkbox {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            padding: 8px;
+            padding: 4px;
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 2px;
         }
 
         .planet-checkbox:hover {
@@ -500,24 +500,44 @@
         .calendar-nav-chunk {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             flex-wrap: wrap;
             justify-content: center;
+        }
+
+        .calendar-nav-chunk.month-controls {
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        .calendar-nav-chunk.year-controls {
+            gap: 6px;
         }
 
         .nav-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
+            border-radius: 4px;
+            padding: 8px 8px;
             cursor: pointer;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
         }
 
         .nav-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        .calendar-nav-chunk.month-controls {
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        .calendar-nav-chunk.year-controls {
+            gap: 6px;
         }
 
         .month-title {
@@ -632,16 +652,20 @@
             <div class="panel">
                 <div class="calendar-header">
                     <div class="calendar-nav-group">
-                        <div class="calendar-nav-chunk">
+                        <div class="calendar-nav-chunk year-controls">
                             <button class="nav-btn" onclick="changeYear(-1000)" title="Previous millennium">« 1000 Y</button>
                             <button class="nav-btn" onclick="changeYear(-100)" title="Previous century">« 100 Y</button>
                             <button class="nav-btn" onclick="changeYear(-10)" title="Previous decade">« 10 Y</button>
                             <button class="nav-btn" onclick="changeYear(-1)" title="Previous year">« Y</button>
+                        </div>
+                        <div class="calendar-nav-chunk month-controls">
                             <button class="nav-btn" onclick="changeMonth(-1)">‹ M</button>
                         </div>
                         <div class="month-title" id="monthTitle"></div>
-                        <div class="calendar-nav-chunk">
+                        <div class="calendar-nav-chunk month-controls">
                             <button class="nav-btn" onclick="changeMonth(1)">M ›</button>
+                        </div>
+                        <div class="calendar-nav-chunk year-controls">
                             <button class="nav-btn" onclick="changeYear(1)" title="Next year">Y »</button>
                             <button class="nav-btn" onclick="changeYear(10)" title="Next decade">10 Y »</button>
                             <button class="nav-btn" onclick="changeYear(100)" title="Next century">100 Y »</button>
@@ -650,7 +674,7 @@
                     </div>
                 </div>
                 <div class="calendar-header calendar-date-controls">
-                    <input type="date" id="jumpDate" onkeydown="if(event.key==='Enter'){jumpToDate()}" style="background:rgba(255,255,255,0.9);color:#333;border:2px solid rgba(255,255,255,0.3);border-radius:8px;padding:8px;">
+                    <input type="date" id="jumpDate" onkeydown="if(event.key==='Enter'){jumpToDate(); this.blur();}" onchange="jumpToDate()" style="background:rgba(255,255,255,0.9);color:#333;border:2px solid rgba(255,255,255,0.3);border-radius:8px;padding:8px;">
                     <button class="nav-btn" onclick="jumpToDate()" title="Go to date">Go</button>
                 </div>
                 <div class="calendar-grid" id="calendar"></div>
@@ -677,7 +701,7 @@
             <div class="year-viz-container">
                 <div class="year-viz" id="century-viz" style="height: 200px;"></div>
             </div>
-            <div class="scroll-hint">← Scroll to explore →</div>
+            <!-- <div class="scroll-hint">← Scroll to explore →</div> -->
         </div>
 
         <!-- Year Overview -->
@@ -686,7 +710,7 @@
             <div class="year-viz-container">
                 <div class="year-viz" id="year-viz"></div>
             </div>
-            <div class="scroll-hint">← Scroll to explore →</div>
+            <!-- <div class="scroll-hint">← Scroll to explore →</div> -->
         </div>
     </div>
 <script>
