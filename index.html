@@ -490,21 +490,29 @@
         }
 
         .calendar-nav-group {
-            display: inline-grid;
-            grid-template-columns: auto auto minmax(180px, auto) auto auto;
-            gap: 12px;
+            display: flex;
             align-items: center;
-            justify-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .calendar-nav-chunk {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .nav-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 8px;
-            padding: 10px 15px;
+            padding: 8px 12px;
             cursor: pointer;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
         }
 
@@ -516,6 +524,7 @@
             font-size: 28px;
             font-weight: 700;
             text-align: center;
+            min-width: 180px;
         }
 
         .calendar-grid {
@@ -623,11 +632,21 @@
             <div class="panel">
                 <div class="calendar-header">
                     <div class="calendar-nav-group">
-                        <button class="nav-btn" onclick="changeYear(-1)" title="Previous year">«</button>
-                        <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+                        <div class="calendar-nav-chunk">
+                            <button class="nav-btn" onclick="changeYear(-1000)" title="Previous millennium">« 1000 Y</button>
+                            <button class="nav-btn" onclick="changeYear(-100)" title="Previous century">« 100 Y</button>
+                            <button class="nav-btn" onclick="changeYear(-10)" title="Previous decade">« 10 Y</button>
+                            <button class="nav-btn" onclick="changeYear(-1)" title="Previous year">« Y</button>
+                            <button class="nav-btn" onclick="changeMonth(-1)">‹ M</button>
+                        </div>
                         <div class="month-title" id="monthTitle"></div>
-                        <button class="nav-btn" onclick="changeMonth(1)">›</button>
-                        <button class="nav-btn" onclick="changeYear(1)" title="Next year">»</button>
+                        <div class="calendar-nav-chunk">
+                            <button class="nav-btn" onclick="changeMonth(1)">M ›</button>
+                            <button class="nav-btn" onclick="changeYear(1)" title="Next year">Y »</button>
+                            <button class="nav-btn" onclick="changeYear(10)" title="Next decade">10 Y »</button>
+                            <button class="nav-btn" onclick="changeYear(100)" title="Next century">100 Y »</button>
+                            <button class="nav-btn" onclick="changeYear(1000)" title="Next millennium">1000 Y »</button>
+                        </div>
                     </div>
                 </div>
                 <div class="calendar-header calendar-date-controls">
@@ -945,24 +964,26 @@ function renderFriendsList()
     renderList(container, items);
 }
 
-function changeMonth(delta)
+function clampCurrentDateToMonth()
 {
     let target_day = current_date.getDate();
-    current_date.setMonth(current_date.getMonth() + delta, 1);
-    let max_day = new Date(current_date.getFullYear(), current_date.getMonth() + 1, 0).getDate();
+    let target_month = current_date.getMonth();
+    let max_day = new Date(current_date.getFullYear(), target_month + 1, 0).getDate();
     current_date.setDate(Math.min(target_day, max_day));
     current_date.setHours(0,0,0,0);
+}
+
+function changeMonth(delta)
+{
+    current_date.setMonth(current_date.getMonth() + delta, 1);
+    clampCurrentDateToMonth();
     renderCalendar();
 }
 
 function changeYear(delta)
 {
-    let target_day = current_date.getDate();
-    let target_month = current_date.getMonth();
-    current_date.setFullYear(current_date.getFullYear() + delta, target_month, 1);
-    let max_day = new Date(current_date.getFullYear(), target_month + 1, 0).getDate();
-    current_date.setDate(Math.min(target_day, max_day));
-    current_date.setHours(0,0,0,0);
+    current_date.setFullYear(current_date.getFullYear() + delta, current_date.getMonth(), 1);
+    clampCurrentDateToMonth();
     renderCalendar();
 }
 
