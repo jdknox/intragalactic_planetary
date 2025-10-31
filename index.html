@@ -476,9 +476,21 @@
 
         .calendar-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             margin-bottom: 25px;
+        }
+
+        .calendar-date-controls {
+            gap: 12px;
+        }
+
+        .calendar-nav-group {
+            display: inline-grid;
+            grid-template-columns: auto auto minmax(180px, auto) auto auto;
+            gap: 12px;
+            align-items: center;
+            justify-items: center;
         }
 
         .nav-btn {
@@ -499,6 +511,7 @@
         .month-title {
             font-size: 28px;
             font-weight: 700;
+            text-align: center;
         }
 
         .calendar-grid {
@@ -605,16 +618,16 @@
             <!-- Right Panel - Calendar -->
             <div class="panel">
                 <div class="calendar-header">
-                    <button class="nav-btn" onclick="changeYear(-1)" title="Previous year">«</button>
-
-                    <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
-                    <div class="month-title" id="monthTitle"></div>
-                    <button class="nav-btn" onclick="changeMonth(1)">›</button>
-
-                    <button class="nav-btn" onclick="changeYear(1)" title="Next year">»</button>
+                    <div class="calendar-nav-group">
+                        <button class="nav-btn" onclick="changeYear(-1)" title="Previous year">«</button>
+                        <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+                        <div class="month-title" id="monthTitle"></div>
+                        <button class="nav-btn" onclick="changeMonth(1)">›</button>
+                        <button class="nav-btn" onclick="changeYear(1)" title="Next year">»</button>
+                    </div>
                 </div>
-                <div class="calendar-header" style="width: 42%">
-                    <input type="date" id="jumpDate" onkeydown="if(event.key==='Enter'){jumpToDate()}" style="background:rgba(255,255,255,0.9);color:#333;border:2px solid rgba(255,255,255,0.3);border-radius:8px;padding:8px;margin-left:10px;">
+                <div class="calendar-header calendar-date-controls">
+                    <input type="date" id="jumpDate" onkeydown="if(event.key==='Enter'){jumpToDate()}" style="background:rgba(255,255,255,0.9);color:#333;border:2px solid rgba(255,255,255,0.3);border-radius:8px;padding:8px;">
                     <button class="nav-btn" onclick="jumpToDate()" title="Go to date">Go</button>
                 </div>
                 <div class="calendar-grid" id="calendar"></div>
@@ -701,7 +714,7 @@ let friends = default_friends.map((friend, index) =>
 });
 let PLANET_BY_NAME = {};
 PLANETS.forEach(p => PLANET_BY_NAME[p.name] = p);
-let selected_planets = ['Earth', 'Mars', 'Jupiter'];
+let selected_planets = ['Venus', 'Earth', 'Mars', 'Jupiter'];
 let current_date = new Date();
 let active_tab = 'single';
 
